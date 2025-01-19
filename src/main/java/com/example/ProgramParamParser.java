@@ -14,8 +14,17 @@ public class ProgramParamParser {
     }
 
     public ProgramParams paramParsing(){
-        return new ProgramParams(args.get("--data"), Integer.parseInt(args.get("--indexed-column-id")),
-                args.get("--input-file"), args.get("--output-file"));
+        try {
+            return new ProgramParams(
+                    args.get("--data"),
+                    Integer.parseInt(args.get("--indexed-column-id")),
+                    args.get("--input-file"),
+                    args.get("--output-file"));
+        }
+        catch (Exception e){
+            System.out.println("Invalid input data");
+            return null;
+        }
     }
 }
 

@@ -1,68 +1,52 @@
 package com.example;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.collections4.Trie;
 import org.apache.commons.collections4.trie.PatriciaTrie;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
-
-/*
-C:\Users\polin\Desktop\airports.csv
-2
-C:\Users\polin\Desktop\airportsText.txt
-C:\Users\polin\Desktop\output.json
-
-java -Xmx7m -jar target/Airports-1.0-SNAPSHOT.jar --data C:\Users\polin\Desktop\airports.csv --indexed-column-id 2 --input-file C:\Users\polin\Desktop\airportsText.txt --output-file C:\Users\polin\Desktop\output.json
-*/
-
+import java.util.stream.Collectors;
 
 public class Main {
     public static void main(String[] args) {
-//        Scanner scanner = new Scanner(System.in);
-//        String pathToCsv = scanner.nextLine();
-//        int indexedColumnId = scanner.nextInt();
-//        indexedColumnId--;
-//        scanner.nextLine();
-//        String inputPathToFile = scanner.nextLine();
-//        String outputPathToFile = scanner.nextLine();
-//        scanner.close();
-
-
         try {
-            String pathToCsv = args[1];
-            int indexedColumnId = Integer.parseInt(args[3]);
-            indexedColumnId--;
-            String inputPathToFile = args[5];
-            String outputPathToFile =  args[7];
-
+            ProgramParamParser programParamParser = new ProgramParamParser(args);
+            ProgramParams programParams = programParamParser.paramParsing();
 
             long startTime = System.currentTimeMillis();
-            ArrayList<String> stringsToSearch = new ArrayList<>();
+            List<String> stringsToSearch;
             try {
                 // запись слов для поиска
-                Scanner scannerFromFile = new Scanner(new File(inputPathToFile));
-                while (scannerFromFile.hasNextLine()) {
-                    stringsToSearch.add(scannerFromFile.nextLine());
-                }
-                scannerFromFile.close();
+                stringsToSearch = Files.lines(Path.of(programParams.getInputPathToFile())).collect(Collectors.toList());
 
                 // подключение к csv файлу
-                Scanner scannerCsv = new Scanner(new File(pathToCsv));
+                Scanner scannerCsv = new Scanner(new File(programParams.getPathToCsv()));
                 scannerCsv.useDelimiter(",");
 
                 // сканирование csv файла
-                Trie<String, Integer> lines = new PatriciaTrie<>();
+                Trie<String, List<Integer>> lines = new PatriciaTrie<>();
                 while (scannerCsv.hasNext())
                 {
                     String[] values = scannerCsv.nextLine().split(",");
-                    lines.put(values[indexedColumnId].replaceAll("\"", ""), Integer.valueOf(values[0]));
+                    if (programParams.getIndexedColumnId() < values.length)
+                    {
+                        String key = values[programParams.getIndexedColumnId()].trim().replaceAll("\"", "");
+                        List<Integer> value;
+
+                        if (lines.containsKey(key)) value = lines.get(key);
+                        else value = new ArrayList<>();
+
+                        value.add(Integer.valueOf(values[0]));
+                        lines.put(key, value);
+                    }
                 }
                 scannerCsv.close();
 
                 // создание структуры для хранения номеров строк
-                Map<String, Map<String, Integer>> resultSearch = new HashMap<>();
+                Map<String, Map<String, List<Integer>>> resultSearch = new HashMap<>();
                 for (String str : stringsToSearch){
                     resultSearch.put(str, new TreeMap<>());
                 }
@@ -78,10 +62,11 @@ public class Main {
                 long initTime = endTime - startTime;
 
                 long time;
+
                 // поиск
                 for (String str: stringsToSearch){
                     startTime = System.currentTimeMillis();
-                    SortedMap<String, Integer> newTrie = lines.prefixMap(str);
+                    SortedMap<String, List<Integer>> newTrie = lines.prefixMap(str);
                     endTime = System.currentTimeMillis();
                     time = endTime - startTime;
                     resultSearch.put(str, new TreeMap<>(newTrie));
@@ -89,27 +74,8 @@ public class Main {
                 }
 
                 // сохранение ответов в json файл
-                OutputJson outputJson = new OutputJson();
-                ArrayList<OutputJson.ResultString> result = new ArrayList<>();
-
-                for (Map.Entry<String, Map<String, Integer>> res : resultSearch.entrySet()){
-                    ArrayList<Integer> valueList = new ArrayList<>(res.getValue().values());
-
-                    result.add(outputJson.new ResultString(
-                            res.getKey(),
-                            valueList,
-                            Math.toIntExact(times.get(res.getKey()))
-                    ));
-                }
-
-                outputJson.setInitTime(Math.toIntExact(initTime));
-                outputJson.setResult(result);
-
-
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.writeValue(new File(outputPathToFile), outputJson);
-                System.out.println(mapper.writeValueAsString(outputJson));
-
+                Result result = new Result();
+                result.writeToJsonFile(programParams.getOutputPathToFile(), result.toJson(initTime, resultSearch, times));
             }
             catch (IOException e) {
                 throw new RuntimeException(e);
@@ -118,8 +84,6 @@ public class Main {
         catch (ArrayIndexOutOfBoundsException e){
             System.out.println("ArrayIndexOutOfBoundsException caught");
         }
-
-
     }
 }
 

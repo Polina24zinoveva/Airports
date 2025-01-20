@@ -14,8 +14,7 @@ import java.util.stream.Collectors;
 public class Main {
     public static void main(String[] args) {
         try {
-            ProgramParamParser programParamParser = new ProgramParamParser(args);
-            ProgramParams programParams = programParamParser.paramParsing();
+            ProgramParams programParams = ProgramParamParser.paramParsing(args);
 
             long startTime = System.currentTimeMillis();
             List<String> stringsToSearch;
@@ -58,11 +57,13 @@ public class Main {
                 result.writeToJsonFile(programParams.getOutputPathToFile(), result.toJson(initTime, resultSearch, times));
             }
             catch (IOException e) {
-                throw new RuntimeException(e);
+                System.out.println("Exception: " + e.getMessage());
             }
         }
         catch (ArrayIndexOutOfBoundsException e){
             System.out.println("ArrayIndexOutOfBoundsException caught");
+        } catch (Exception e) {
+            System.out.println("Exception: " + e.getMessage());
         }
     }
 

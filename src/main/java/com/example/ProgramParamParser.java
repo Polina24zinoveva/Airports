@@ -4,28 +4,30 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ProgramParamParser {
-    private Map<String, String> args = new HashMap<>();
 
-
-    public ProgramParamParser(String[] args) {
+    public static ProgramParams paramParsing(String[] args) throws Exception {
+        Map<String, String> params = new HashMap<>();
         for (int i = 0; i < args.length; i += 2) {
-            this.args.put(args[i], args[i + 1]);
+            params.put(args[i], args[i + 1]);
+        }
+        if (params.containsKey("--data") && params.containsKey("--indexed-column-id") &&
+                params.containsKey("--input-file") && params.containsKey("--output-file")){
+            try {
+                return new ProgramParams(
+                        params.get("--data"),
+                        Integer.parseInt(params.get("--indexed-column-id")),
+                        params.get("--input-file"),
+                        params.get("--output-file"));
+            }
+            catch (NumberFormatException e){
+                throw new NumberFormatException("--indexed-column-id mast be integer");
+            }
+        }
+        else {
+            throw new IllegalArgumentException("Invalid input data");
         }
     }
 
-    public ProgramParams paramParsing(){
-        try {
-            return new ProgramParams(
-                    args.get("--data"),
-                    Integer.parseInt(args.get("--indexed-column-id")),
-                    args.get("--input-file"),
-                    args.get("--output-file"));
-        }
-        catch (Exception e){
-            System.out.println("Invalid input data");
-            return null;
-        }
-    }
 }
 
 

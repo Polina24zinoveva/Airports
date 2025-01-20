@@ -1,6 +1,5 @@
 package com.example;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -34,7 +33,6 @@ public class Result {
     }
 
     public String toJson(Long initTime, Map<String, Map<String, List<Integer>>> resultSearch, Map<String, Long> times) throws IOException {
-
         ArrayList<Result.ResultString> result = new ArrayList<>();
 
         for (Map.Entry<String, Map<String, List<Integer>>> res : resultSearch.entrySet()){
@@ -59,7 +57,7 @@ public class Result {
         return mapper.writeValueAsString(this);
     }
 
-    public void writeToJsonFile(String outputPathToFile, String outputJson) throws IOException {
+    public static void writeToJsonFile(String outputPathToFile, String outputJson) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         mapper.writeValue(new File(outputPathToFile), outputJson);
     }

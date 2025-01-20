@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Objects;
+
 @NoArgsConstructor
 @Getter
 @Setter
@@ -18,5 +20,21 @@ public class ProgramParams {
         this.indexedColumnId = indexedColumnId - 1;
         this.inputPathToFile = inputPathToFile;
         this.outputPathToFile = outputPathToFile;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ProgramParams that = (ProgramParams) o;
+        return indexedColumnId == that.indexedColumnId &&
+                Objects.equals(pathToCsv, that.pathToCsv) &&
+                Objects.equals(inputPathToFile, that.inputPathToFile) &&
+                Objects.equals(outputPathToFile, that.outputPathToFile);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(pathToCsv, indexedColumnId, inputPathToFile, outputPathToFile);
     }
 }
